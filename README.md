@@ -1,5 +1,7 @@
 # GameStore
 
+**Auteur: DILLON AZAG**
+
 Application mobile de boutique de jeux vidéo développée avec Flutter et Firebase.
 
 Les jeux sont récupérés dynamiquement depuis Cloud Firestore et affichés dans
@@ -12,7 +14,7 @@ liste de jeux recommandés.
 - Page de détail d'un jeu (image, titre, description)
 - Jeux recommandés affichés en grille
 - Carte de jeu qui s'adapte à la place disponible (liste ou grille)
-
+- Wishlist
 ## Technologies
 
 - Flutter
