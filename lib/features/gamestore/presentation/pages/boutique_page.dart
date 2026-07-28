@@ -37,10 +37,7 @@ class _BoutiquePageState extends State<BoutiquePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
         title: const Text('GameStore'),
       ),
       body: SafeArea(

@@ -12,10 +12,15 @@ class GameRepository {
     try {
       final snapshot = await _db.collection('games').get();
 
-      // On transforme chaque document en objet Game avec une boucle
+      // On transforme chaque document en objet Game avec une boucle.
+      // Un document mal formé est ignoré au lieu de casser toute la liste.
       List<Game> jeux = [];
       for (var doc in snapshot.docs) {
-        jeux.add(Game.fromFirestore(doc));
+        try {
+          jeux.add(Game.fromFirestore(doc));
+        } catch (erreur) {
+          print('Jeu ignoré (${doc.id}) : $erreur');
+        }
       }
       return jeux;
     } catch (erreur) {
@@ -32,7 +37,11 @@ class GameRepository {
       List<Game> jeux = [];
       for (var doc in snapshot.docs) {
         if (doc.id != idJeuActuel) {
-          jeux.add(Game.fromFirestore(doc));
+          try {
+            jeux.add(Game.fromFirestore(doc));
+          } catch (erreur) {
+            print('Jeu ignoré (${doc.id}) : $erreur');
+          }
         }
       }
       return jeux;

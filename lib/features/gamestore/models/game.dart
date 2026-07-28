@@ -8,9 +8,10 @@ class Game {
   final String description;
   final double prix;
   final List<String> plateformes;
-  // Champs optionnels : absents de la base pour l'instant, prêts si on les ajoute
-  final String? imageUrl;
+  final bool estMultijoueur;
   final String? genre;
+  // Optionnel : absent de la base pour l'instant, prêt si on l'ajoute
+  final String? imageUrl;
 
   Game({
     required this.id,
@@ -18,22 +19,57 @@ class Game {
     required this.description,
     required this.prix,
     required this.plateformes,
-    this.imageUrl,
+    required this.estMultijoueur,
     this.genre,
+    this.imageUrl,
   });
 
-  // Construit un Game à partir d'un document Firestore
+  // Construit un Game à partir d'un document de liste (collection)
   factory Game.fromFirestore(QueryDocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    return Game.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+  }
 
+  // Construit un Game à partir d'un identifiant et d'une Map (document unique)
+  factory Game.fromMap(String id, Map<String, dynamic> data) {
     return Game(
-      id: doc.id,
+      id: id,
       nom: data['nom'] ?? '',
       description: data['description'] ?? '',
-      prix: (data['prix'] ?? 0).toDouble(),
+      prix: _lirePrix(data['prix']),
       plateformes: List<String>.from(data['plateformes'] ?? []),
-      imageUrl: data['imageUrl'],
+      estMultijoueur: _lireMultijoueur(data['multijoueur']),
       genre: data['genre'],
+      // On accepte plusieurs noms de champ possibles pour l'image
+      imageUrl: data['imageUrl'] ??
+          data['imageURL'] ??
+          data['image'] ??
+          data['url'],
     );
+  }
+
+  // Prix affiché : "Gratuit" si le jeu est à 0, sinon le prix en euros
+  String get prixAffiche => prix == 0 ? 'Gratuit' : '$prix €';
+
+  // Le prix peut être un nombre ou du texte selon les documents : on gère les deux.
+  static double _lirePrix(dynamic valeur) {
+    if (valeur is num) {
+      return valeur.toDouble();
+    }
+    if (valeur is String) {
+      return double.tryParse(valeur) ?? 0;
+    }
+    return 0;
+  }
+
+  // Le champ multijoueur peut être un booléen ou du texte : on l'interprète.
+  static bool _lireMultijoueur(dynamic valeur) {
+    if (valeur is bool) {
+      return valeur;
+    }
+    if (valeur is String) {
+      String v = valeur.toLowerCase().trim();
+      return v == 'true' || v == 'oui' || v == 'multijoueur' || v == '1';
+    }
+    return false;
   }
 }

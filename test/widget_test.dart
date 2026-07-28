@@ -14,6 +14,8 @@ void main() {
       description: 'Un jeu de survie spatial.',
       prix: 49.99,
       plateformes: ['PC', 'Xbox Series X', 'PS5'],
+      estMultijoueur: false,
+      genre: 'Aventure',
     );
 
     bool aCliqueVoir = false;
@@ -29,10 +31,10 @@ void main() {
       ),
     );
 
-    // Le titre, le badge prix, le badge plateforme et le bouton sont présents
+    // Le titre, le badge prix, le badge genre et le bouton sont présents
     expect(find.text('Starlight Explorers'), findsOneWidget);
     expect(find.text('49.99 €'), findsOneWidget);
-    expect(find.text('PC'), findsOneWidget);
+    expect(find.text('Aventure'), findsOneWidget);
     expect(find.text('Voir'), findsOneWidget);
 
     // Le bouton Voir déclenche bien le callback

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../data/auth_repository.dart';
 import '../../data/game_repository.dart';
+import '../../data/wishlist_repository.dart';
 import '../../models/game.dart';
+import '../theme.dart';
 import '../widgets/game_card.dart';
 
 // Fiche détaillée d'un jeu : image en grand, titre, description,
@@ -17,14 +20,58 @@ class GameDetailPage extends StatefulWidget {
 
 class _GameDetailPageState extends State<GameDetailPage> {
   final GameRepository _repository = GameRepository();
+  final AuthRepository _auth = AuthRepository();
+  final WishlistRepository _wishlist = WishlistRepository();
 
   late Future<List<Game>> _futureReco;
+
+  // Le jeu est-il déjà dans la liste de souhaits ?
+  bool _dansSouhaits = false;
 
   @override
   void initState() {
     super.initState();
     // On récupère les recommandations (tous les autres jeux)
     _futureReco = _repository.getRecommandations(widget.game.id);
+
+    // On vérifie si le jeu est déjà dans la liste de souhaits
+    _wishlist.estDansSouhaits(_auth.uid ?? '', widget.game.id).then((valeur) {
+      if (mounted) {
+        setState(() {
+          _dansSouhaits = valeur;
+        });
+      }
+    });
+  }
+
+  // Ajoute ou retire le jeu de la liste de souhaits selon son état actuel
+  Future<void> _basculerSouhaits() async {
+    String? uid = _auth.uid;
+    if (uid == null) return;
+
+    if (_dansSouhaits) {
+      await _wishlist.retirer(uid, widget.game.id);
+      if (!mounted) return;
+      setState(() {
+        _dansSouhaits = false;
+      });
+      _message('${widget.game.nom} retiré de ta liste de souhaits',
+          Colors.orange);
+    } else {
+      await _wishlist.ajouter(uid, widget.game.id);
+      if (!mounted) return;
+      setState(() {
+        _dansSouhaits = true;
+      });
+      _message(
+          '${widget.game.nom} ajouté à ta liste de souhaits', Colors.green);
+    }
+  }
+
+  void _message(String texte, Color couleur) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(texte), backgroundColor: couleur),
+    );
   }
 
   void _ouvrirFiche(Game game) {
@@ -39,10 +86,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
     Game game = widget.game;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
         title: Text(game.nom),
       ),
       body: SafeArea(
@@ -54,7 +98,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
               Container(
                 height: 220,
                 width: double.infinity,
-                color: Colors.deepPurple.shade100,
+                color: kSurface,
                 child: _image(game),
               ),
 
@@ -73,14 +117,38 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Prix
-                    Text(
-                      '${game.prix} €',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    // Prix + mode de jeu
+                    Row(
+                      children: [
+                        Text(
+                          game.prixAffiche,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: kAccentLight,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          game.estMultijoueur ? 'Multijoueur' : 'Solo',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Plateformes
+                    const Text(
+                      'Plateformes',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      children: _puces(game.plateformes),
                     ),
                     const SizedBox(height: 12),
 
@@ -88,6 +156,24 @@ class _GameDetailPageState extends State<GameDetailPage> {
                     Text(
                       game.description,
                       style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Bouton liste de souhaits (bascule Ajouter / Retirer)
+                    ElevatedButton.icon(
+                      onPressed: _basculerSouhaits,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _dansSouhaits ? Colors.red : kAccent,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 45),
+                      ),
+                      icon: Icon(_dansSouhaits
+                          ? Icons.favorite
+                          : Icons.favorite_border),
+                      label: Text(_dansSouhaits
+                          ? 'Retirer de la liste de souhaits'
+                          : 'Ajouter à la liste de souhaits'),
                     ),
                     const SizedBox(height: 24),
 
@@ -113,16 +199,47 @@ class _GameDetailPageState extends State<GameDetailPage> {
     );
   }
 
-  Widget _image(Game game) {
-    if (game.imageUrl != null && game.imageUrl!.isNotEmpty) {
-      return Image.network(
-        game.imageUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) =>
-            const Icon(Icons.videogame_asset, size: 80),
+  // Construit une petite étiquette par plateforme
+  List<Widget> _puces(List<String> plateformes) {
+    List<Widget> puces = [];
+    for (var plateforme in plateformes) {
+      puces.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: kAccent.withAlpha(60),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: kAccent.withAlpha(120)),
+          ),
+          child: Text(
+            plateforme,
+            style: const TextStyle(fontSize: 12, color: Colors.white),
+          ),
+        ),
       );
     }
-    return const Icon(Icons.videogame_asset, size: 80);
+    return puces;
+  }
+
+  Widget _image(Game game) {
+    String? url = game.imageUrl;
+    const fallback = Icon(Icons.videogame_asset, size: 80);
+
+    if (url == null || url.isEmpty) {
+      return fallback;
+    }
+    if (url.startsWith('http')) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => fallback,
+      );
+    }
+    return Image.asset(
+      url,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => fallback,
+    );
   }
 
   Widget _recommandations() {
