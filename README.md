@@ -1,17 +1,27 @@
-# gamestore
+# GameStore
 
-A new Flutter project.
+Application mobile de boutique de jeux vidéo développée avec Flutter et Firebase.
 
-## Getting Started
+Les jeux sont récupérés dynamiquement depuis Cloud Firestore et affichés dans
+une boutique. Chaque jeu possède une page de détail avec une description et une
+liste de jeux recommandés.
 
-This project is a starting point for a Flutter application.
+## Fonctionnalités
 
-A few resources to get you started if this is your first Flutter project:
+- Boutique en ligne : liste des jeux récupérés depuis Firestore
+- Page de détail d'un jeu (image, titre, description)
+- Jeux recommandés affichés en grille
+- Carte de jeu qui s'adapte à la place disponible (liste ou grille)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Technologies
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter
+- Firebase Core
+- Cloud Firestore
+
+## Lancer le projet
+
+```bash
+flutter pub get
+flutter run
+```
